@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request
+import os  # Necesario para acceder a las variables de entorno
 
 app = Flask(__name__)
 
@@ -31,8 +32,6 @@ def peso_ruta(ruta, pedidos):
 
 # Función para calcular la distancia total de una ruta
 def distancia_total(ruta, coord, almacen):
-    # Aquí debes implementar una fórmula para calcular la distancia entre puntos (puede ser usando haversine o euclidiana)
-    # Este es un ejemplo simplificado
     distancia = 0.0
     for i in range(len(ruta) - 1):
         lugar1 = ruta[i]
@@ -55,18 +54,11 @@ def index():
         if not lugares or not latitudes or not longitudes or not pedidos_lista:
             return render_template('formulario.html', error="Por favor complete todos los campos.", submitted=False)
 
-        # Imprimir para ver los datos recibidos
-        print("Datos recibidos:")
-        print("Lugares:", lugares)
-        print("Latitudes:", latitudes)
-        print("Longitudes:", longitudes)
-        print("Pedidos:", pedidos_lista)
-
+        # Procesamiento de los datos recibidos
         coord = {}
         pedidos = {}
         for i in range(len(lugares)):
             lugar = lugares[i].strip()
-            # Verificamos que latitudes y longitudes no sean vacíos antes de convertirlos
             try:
                 lat = float(latitudes[i].strip()) if latitudes[i].strip() else None
                 lon = float(longitudes[i].strip()) if longitudes[i].strip() else None
@@ -80,18 +72,12 @@ def index():
 
         almacen = (19.29379546003528, -99.65370007457237)  # Ubicación del almacén (fijo)
 
-        # Cambiar las restricciones para permitir más flexibilidad
-        max_carga = 100  # Aumentamos la carga máxima
-        max_clientes = 10  # Aumentamos el número de clientes permitidos
-        max_distancia = 500  # Aumentamos la distancia máxima
+        # Restricciones de carga y número de clientes
+        max_carga = 100
+        max_clientes = 10
 
         # Calculando las rutas
         rutas = vrp_voraz(coord, pedidos, almacen, max_carga, max_clientes)
-
-        # Imprimir información de las rutas para debug
-        print("Rutas generadas:")
-        for r in rutas:
-            print(r)
 
         # Mostrando el resumen de las rutas calculadas
         resumen = []
@@ -112,4 +98,6 @@ def index():
     return render_template('formulario.html', submitted=False)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Usamos el puerto proporcionado por el entorno de Render
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)  # Asegúrate de estar usando '0.0.0.0' en producción
